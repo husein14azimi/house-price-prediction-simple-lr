@@ -1,18 +1,6 @@
-# House Price Prediction (Simple Linear Regression)
+# GitHub Pages branch
 
-Single-page Next.js (App Router) app that trains a custom simple linear regression model in the browser, stores training data in localStorage, and visualizes results with Recharts.
+This branch is **auto-generated** by the GitHub Actions workflow from `main`.
 
-## Development
-
-```bash
-npm install
-npm run dev
-```
-
-## Build (Static export)
-
-```bash
-GH_PAGES=true npm run build
-```
-
-The static output is generated into `out/` and deployed to GitHub Pages by the workflow.
+- Source code lives in `main`
+- Static export output (contents of `out/`) is deployed here
