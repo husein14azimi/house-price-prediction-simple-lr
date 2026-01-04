@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { nanoid } from "nanoid";
 import {
   CartesianGrid,
+  ComposedChart,
   Legend,
   Line,
   ResponsiveContainer,
   Scatter,
-  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -50,6 +49,37 @@ function parseNumber(v: string): number {
   const cleaned = v.replace(/,/g, "").trim();
   if (cleaned === "") return NaN;
   return Number(cleaned);
+}
+
+function makeId(): string {
+  // Works in modern browsers; falls back to a timestamp+random string.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const anyCrypto = globalThis.crypto as any;
+  if (anyCrypto?.randomUUID) return anyCrypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function StarPoint(props: any) {
+  const { cx, cy, fill = "#22c55e" } = props;
+  const size = 12;
+  const rOuter = size / 2;
+  const rInner = rOuter * 0.45;
+
+  const points: Array<[number, number]> = [];
+  for (let i = 0; i < 10; i++) {
+    const angle = (Math.PI / 5) * i - Math.PI / 2;
+    const r = i % 2 === 0 ? rOuter : rInner;
+    points.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
+  }
+
+  const d =
+    "M " +
+    points
+      .map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`)
+      .join(" L ") +
+    " Z";
+
+  return <path d={d} fill={fill} stroke="#15803d" strokeWidth={1} />;
 }
 
 export default function Page() {
@@ -124,10 +154,12 @@ export default function Page() {
     }
 
     if (editId) {
-      setData((prev) => prev.map((d) => (d.id === editId ? { ...d, area: a, price: p } : d)));
+      setData((prev) =>
+        prev.map((d) => (d.id === editId ? { ...d, area: a, price: p } : d))
+      );
       setEditId(null);
     } else {
-      setData((prev) => [...prev, { id: nanoid(), area: a, price: p }]);
+      setData((prev) => [...prev, { id: makeId(), area: a, price: p }]);
     }
 
     setArea("");
@@ -196,11 +228,10 @@ export default function Page() {
     const xs = data.map((d) => d.area);
     const minX = Math.min(...xs);
     const maxX = Math.max(...xs);
-    const points = [
+    return [
       { area: minX, price: predictPrice(minX, model.m, model.b) },
       { area: maxX, price: predictPrice(maxX, model.m, model.b) },
     ];
-    return points;
   }, [model, data]);
 
   const residuals = useMemo(() => {
@@ -230,9 +261,9 @@ export default function Page() {
             House Price Prediction using Simple Linear Regression
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-700">
-            This single-page app lets you enter training data (area vs. price),
-            fit a simple linear regression model 
-            and visualize both the regression line and residuals—entirely in the browser.
+            This single-page app lets you enter training data (area vs. price), fit a
+            simple linear regression model and visualize both the regression line and
+            residuals—entirely in the browser.
           </p>
         </header>
 
@@ -256,9 +287,7 @@ export default function Page() {
                   className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400"
                   placeholder="e.g., 120"
                 />
-                {areaError ? (
-                  <p className="mt-1 text-xs text-red-600">{areaError}</p>
-                ) : null}
+                {areaError ? <p className="mt-1 text-xs text-red-600">{areaError}</p> : null}
               </div>
 
               <div>
@@ -271,9 +300,7 @@ export default function Page() {
                   className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400"
                   placeholder="e.g., 250000"
                 />
-                {priceError ? (
-                  <p className="mt-1 text-xs text-red-600">{priceError}</p>
-                ) : null}
+                {priceError ? <p className="mt-1 text-xs text-red-600">{priceError}</p> : null}
               </div>
 
               <div className="flex items-end gap-2">
@@ -296,9 +323,7 @@ export default function Page() {
               </div>
             </div>
 
-            {formError ? (
-              <p className="mt-3 text-sm text-red-600">{formError}</p>
-            ) : null}
+            {formError ? <p className="mt-3 text-sm text-red-600">{formError}</p> : null}
           </form>
 
           <div className="mt-6 overflow-x-auto">
@@ -319,10 +344,7 @@ export default function Page() {
                   </tr>
                 ) : (
                   data.map((d) => (
-                    <tr
-                      key={d.id}
-                      className="border-b border-zinc-100 last:border-0"
-                    >
+                    <tr key={d.id} className="border-b border-zinc-100 last:border-0">
                       <td className="py-2">{d.area}</td>
                       <td className="py-2">{formatMoney(d.price)}</td>
                       <td className="py-2">
@@ -363,36 +385,28 @@ export default function Page() {
             </button>
           </div>
 
-          {trainError ? (
-            <p className="mt-3 text-sm text-red-600">{trainError}</p>
-          ) : null}
+          {trainError ? <p className="mt-3 text-sm text-red-600">{trainError}</p> : null}
 
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="rounded-lg border border-zinc-200 p-4">
               <div className="text-xs text-zinc-600">Equation</div>
-              <div className="mt-1 font-mono text-sm">
-                {model ? model.equation : "-"}
-              </div>
+              <div className="mt-1 font-mono text-sm">{model ? model.equation : "-"}</div>
             </div>
 
             <div className="rounded-lg border border-zinc-200 p-4">
               <div className="text-xs text-zinc-600">R²</div>
-              <div className="mt-1 font-mono text-sm">
-                {model ? round(model.r2, 4) : "-"}
-              </div>
+              <div className="mt-1 font-mono text-sm">{model ? round(model.r2, 4) : "-"}</div>
             </div>
 
             <div className="rounded-lg border border-zinc-200 p-4">
               <div className="text-xs text-zinc-600">RMSE</div>
-              <div className="mt-1 font-mono text-sm">
-                {model ? formatMoney(model.rmse) : "-"}
-              </div>
+              <div className="mt-1 font-mono text-sm">{model ? formatMoney(model.rmse) : "-"}</div>
             </div>
           </div>
 
           <p className="mt-4 text-xs text-zinc-600">
-            Notes: R² closer to 1 means better fit. RMSE is the typical prediction
-            error size (in USD) on the training set.
+            Notes: R² closer to 1 means better fit. RMSE is the typical prediction error size (in USD)
+            on the training set.
           </p>
         </section>
 
@@ -425,35 +439,29 @@ export default function Page() {
                 </div>
               </div>
             </div>
-            {predictError ? (
-              <p className="mt-3 text-sm text-red-600">{predictError}</p>
-            ) : null}
+            {predictError ? <p className="mt-3 text-sm text-red-600">{predictError}</p> : null}
           </form>
         </section>
 
         <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold">Visualization</h2>
-          <p className="mt-2 text-sm text-zinc-700">
-            Train the model to see the regression line and residual plot.
-          </p>
+          <p className="mt-2 text-sm text-zinc-700">Train the model to see the regression line and residual plot.</p>
 
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="h-[380px] rounded-lg border border-zinc-200 p-3">
               <div className="mb-2 text-sm font-medium">Training data + regression line</div>
               <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                <ComposedChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     type="number"
                     dataKey="area"
-                    name="Area"
                     tick={{ fontSize: 12 }}
                     label={{ value: "Area (sq m)", position: "insideBottom", offset: -5, fontSize: 12 }}
                   />
                   <YAxis
                     type="number"
                     dataKey="price"
-                    name="Price"
                     tick={{ fontSize: 12 }}
                     label={{ value: "Price (USD)", angle: -90, position: "insideLeft", fontSize: 12 }}
                   />
@@ -464,7 +472,9 @@ export default function Page() {
                     }}
                   />
                   <Legend />
+
                   <Scatter name="Training data" data={data} fill="#0f172a" />
+
                   {model ? (
                     <Line
                       name="Regression line"
@@ -477,44 +487,45 @@ export default function Page() {
                       isAnimationActive={false}
                     />
                   ) : null}
+
                   {model && predictionPoint.length > 0 ? (
                     <Scatter
                       name="Prediction"
                       data={predictionPoint}
                       fill="#22c55e"
-                      shape="star"
+                      shape={<StarPoint />}
+                      isAnimationActive={false}
                     />
                   ) : null}
-                </ScatterChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
 
             <div className="h-[380px] rounded-lg border border-zinc-200 p-3">
               <div className="mb-2 text-sm font-medium">Residual plot</div>
               <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                <ComposedChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     type="number"
                     dataKey="area"
-                    name="Area"
                     tick={{ fontSize: 12 }}
                     label={{ value: "Area (sq m)", position: "insideBottom", offset: -5, fontSize: 12 }}
                   />
                   <YAxis
                     type="number"
                     dataKey="residual"
-                    name="Residual"
                     tick={{ fontSize: 12 }}
                     label={{ value: "Residual (actual - predicted)", angle: -90, position: "insideLeft", fontSize: 12 }}
                   />
                   <Tooltip
-                    formatter={(value: any, name: any, item: any) => {
+                    formatter={(value: any, name: any) => {
                       if (name === "residual") return [formatMoney(Number(value)), "Residual"];
                       return [value, name];
                     }}
                   />
                   <Legend />
+
                   <Line
                     name="Zero residual"
                     type="linear"
@@ -525,8 +536,9 @@ export default function Page() {
                     dot={false}
                     isAnimationActive={false}
                   />
+
                   <Scatter name="Residuals" data={residuals} fill="#0f172a" />
-                </ScatterChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>
